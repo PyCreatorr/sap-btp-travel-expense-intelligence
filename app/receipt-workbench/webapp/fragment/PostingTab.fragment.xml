@@ -1,0 +1,400 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <IconTabFilter key="posting">
+        <VBox class="sapUiSmallMargin">
+
+            <MessageStrip
+                text="Posting Proposal prepares an accounting draft from the extracted receipt items: it splits airfare and non-airfare costs, converts them to the selected posting currency, and proposes posting categories/accounts. It is blocked when Match Travel Data is SUSPICIOUS."
+                type="Information"
+                showIcon="true"
+                class="sapUiTinyMarginBottom" />
+
+            <OverflowToolbar class="sapUiTinyMarginBottom">
+                <Label text="Posting Currency" labelFor="postingCurrencyBox" />
+                <ComboBox
+                    id="postingCurrencyBox"
+                    width="10rem"
+                    value="{ui>/selectedTargetCurrency}"
+                    change=".onTargetCurrencyChange"
+                    selectionChange=".onTargetCurrencyChange"
+                    placeholder="EUR"
+                    items="{ui>/currencyOptions}">
+                    <core:Item key="{ui>key}" text="{ui>text}" />
+                </ComboBox>
+                                <Button
+                    text="Generate Posting Proposal"
+                    type="Emphasized"
+                    press=".onPostingProposal"
+                    enabled="{= ${ui>/matchStatusText} !== 'SUSPICIOUS' }" />
+                <ToolbarSpacer />
+                <ObjectStatus text="{= 'Current currency: ' + ${ui>/selectedTargetCurrency} }" />
+            </OverflowToolbar>
+
+            <MessageStrip
+                text="Posting Proposal is blocked because Match Travel Data is SUSPICIOUS. First fix the travel/customer/booking match, then generate the accounting draft."
+                type="Error"
+                showIcon="true"
+                visible="{= ${ui>/matchStatusText} === 'SUSPICIOUS' }"
+                class="sapUiTinyMarginBottom" />
+
+            <MessageStrip
+                text="{ui>/postingErrorMessage}"
+                type="Warning"
+                showIcon="true"
+                visible="{= !!${ui>/postingErrorMessage} }"
+                class="sapUiTinyMarginBottom" />
+
+            <VBox visible="{ui>/postingHasResult}">
+
+                <Panel
+                    headerText="Posting Proposal Result"
+                    expandable="false"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <FlexBox wrap="Wrap" renderType="Bare">
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Draft Status" />
+                                <ObjectStatus
+                                    text="{ui>/postingStatusText}"
+                                    state="{path: 'ui>/postingStatusState', formatter: '.formatValueState'}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Receipt" />
+                                <Text text="{ui>/posting/receiptNo}" />
+                                <Text text="{ui>/posting/receiptDate}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Travel" />
+                                <Text text="{ui>/posting/travelId}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Supplier" />
+                                <Text text="{ui>/posting/supplier}" wrapping="true" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Original Currency" />
+                                <ObjectStatus text="{ui>/posting/currencyOriginal}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Posting Currency" />
+                                <ObjectStatus text="{ui>/posting/postingCurrency}" />
+                            </VBox>
+                        </FlexBox>
+
+                        <MessageStrip
+                            text="{ui>/postingSummaryText}"
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginTop" />
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="What does Posting Proposal answer?"
+                    expandable="true"
+                    expanded="false"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <List>
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Global business question"
+                                description="If this receipt is accepted, which financial lines could be sent to accounting as a posting draft?" />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Source of posting lines"
+                                description="Posting lines are created from extracted financial receipt items. Flight legs and passengers are context only and do not automatically create extra posting lines." />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Airfare vs non-airfare split"
+                                description="Airfare items are separated from fees, taxes, service charges, hotel, taxi, or other costs because accounting may use different cost categories or accounts." />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Currency conversion"
+                                description="The receipt amounts stay visible in the original receipt currency and are also converted into the selected posting currency using the FX conversion service." />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Balance check"
+                                description="The proposal compares the receipt header total with the sum of extracted item lines. A difference means the extracted items do not fully explain the receipt total." />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Safety dependency"
+                                description="This proposal is only safe after Travel Data is credible. If Match Travel Data is SUSPICIOUS, the proposal is blocked because the receipt may point to wrong or unmatched travel bookings." />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Not included here"
+                                description="This block does not decide whether the receipt is true, cost-efficient, approved, or posted. It only prepares a draft split for a later accounting step after the match is acceptable." />
+                        </List>
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Financial Split"
+                    expandable="false"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <FlexBox wrap="Wrap" renderType="Bare">
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Receipt Total" />
+                                <ObjectNumber
+                                    number="{ui>/posting/totalOriginalDisplay}"
+                                    unit="{ui>/posting/currencyOriginal}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Line Sum" />
+                                <ObjectNumber
+                                    number="{ui>/posting/lineSumOriginalDisplay}"
+                                    unit="{ui>/posting/currencyOriginal}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Difference" />
+                                <ObjectNumber
+                                    number="{ui>/posting/totalDifferenceOriginalDisplay}"
+                                    unit="{ui>/posting/currencyOriginal}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Airfare" />
+                                <ObjectNumber
+                                    number="{ui>/posting/airfareOriginalDisplay}"
+                                    unit="{ui>/posting/currencyOriginal}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Non-Airfare" />
+                                <ObjectNumber
+                                    number="{ui>/posting/nonAirfareOriginalDisplay}"
+                                    unit="{ui>/posting/currencyOriginal}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Balance Result" />
+                                <ObjectStatus
+                                    text="{ui>/postingBalanceText}"
+                                    state="{path: 'ui>/postingBalanceState', formatter: '.formatValueState'}" />
+                            </VBox>
+                        </FlexBox>
+
+                        <MessageStrip
+                            text="The receipt total is the supplier/header amount. The line sum is the sum of extracted financial items. Posting should normally be reviewed if these two values differ."
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginTop" />
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Posting Currency View"
+                    expandable="false"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <FlexBox wrap="Wrap" renderType="Bare">
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Converted Total" />
+                                <ObjectNumber
+                                    number="{ui>/posting/totalPostingDisplay}"
+                                    unit="{ui>/posting/postingCurrency}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Converted Line Sum" />
+                                <ObjectNumber
+                                    number="{ui>/posting/lineSumPostingDisplay}"
+                                    unit="{ui>/posting/postingCurrency}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Converted Difference" />
+                                <ObjectNumber
+                                    number="{ui>/posting/totalDifferencePostingDisplay}"
+                                    unit="{ui>/posting/postingCurrency}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Converted Airfare" />
+                                <ObjectNumber
+                                    number="{ui>/posting/airfarePostingDisplay}"
+                                    unit="{ui>/posting/postingCurrency}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Converted Non-Airfare" />
+                                <ObjectNumber
+                                    number="{ui>/posting/nonAirfarePostingDisplay}"
+                                    unit="{ui>/posting/postingCurrency}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="FX Rate" />
+                                <ObjectNumber number="{ui>/posting/fx/rate}" />
+                                <Text text="{= 'Source: ' + ${ui>/posting/fx/source} }" />
+                            </VBox>
+                        </FlexBox>
+
+                        <MessageStrip
+                            text="Posting currency is a presentation/proposal currency. Original receipt amounts are kept so the accountant can trace every converted value back to the supplier document."
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginTop" />
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Document Context"
+                    expandable="true"
+                    expanded="true"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <FlexBox wrap="Wrap" renderType="Bare">
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Document Type" />
+                                <ObjectStatus text="{ui>/posting/documentContext/documentType}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Customers" />
+                                <ObjectNumber number="{ui>/posting/documentContext/customerCount}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Flight Legs" />
+                                <ObjectNumber number="{ui>/posting/documentContext/flightLegCount}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Fare / Customer / Leg" />
+                                <ObjectNumber
+                                    number="{ui>/posting/documentContext/farePerCustomerPerLeg}"
+                                    unit="{ui>/posting/currencyOriginal}" />
+                            </VBox>
+                        </FlexBox>
+
+                        <MessageStrip
+                            text="{ui>/posting/documentContext/postingLineStrategy}"
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginTop" />
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Why these decisions?"
+                    expandable="true"
+                    expanded="false"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <List>
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="One financial item becomes one proposal line"
+                                description="The extraction already produced financial receipt items. The proposal keeps this financial structure instead of duplicating lines by passenger or flight leg." />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Airfare category"
+                                description="Items with type Airfare are proposed as travel airfare expense because they represent flight fare cost." />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Fee and tax categories"
+                                description="Fee and tax items are proposed separately from airfare, because they may require different posting categories or later G/L account mapping." />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Account suggestions are placeholders"
+                                description="Suggested accounts such as TRAVEL_AIRFARE_EXPENSE are not real FI account numbers yet. They are draft categories that can later be mapped to real G/L accounts." />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="No automatic posting"
+                                description="The proposal returns data for the UI or next step only. It does not call an accounting posting API and does not create an FI document." />
+                        </List>
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Proposed Posting Lines"
+                    expandable="true"
+                    expanded="true"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <MessageStrip
+                            text="Each row is one extracted financial charge item. Review the category, proposed account, original amount, converted amount, and reason before using it for accounting."
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+
+                        <Table
+                            items="{ui>/posting/lines}"
+                            noDataText="No posting lines available."
+                            sticky="ColumnHeaders"
+                            fixedLayout="true">
+                            <columns>
+                                <Column width="2.5rem"><Text text="Line" /></Column>
+                                <Column width="5rem"><Text text="Category" /></Column>
+                                <Column width="4.5rem"><Text text="Type" /></Column>
+                                <Column width="6rem"><Text text="Description" /></Column>
+                                <Column width="6rem" hAlign="End"><Text text="Original" /></Column>
+                                <Column width="6rem" hAlign="End"><Text text="Posting" /></Column>
+                                <Column width="11rem"><Text text="Suggested Account" /></Column>
+                                <Column width="11rem"><Text text="Reason" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem vAlign="Middle">
+                                    <cells>
+                                        <Text text="{ui>lineNo}" wrapping="false" />
+                                        <ObjectStatus
+                                            text="{ui>categoryText}"
+                                            state="{path: 'ui>categoryState', formatter: '.formatValueState'}" />
+                                        <Text text="{ui>type}" wrapping="false" tooltip="{ui>type}" />
+                                        <Text
+                                            text="{ui>description}"
+                                            wrapping="true"
+                                            maxLines="4"
+                                            tooltip="{ui>description}" />
+                                        <ObjectNumber number="{ui>amountOriginalDisplay}" unit="{ui>currencyOriginal}" />
+                                        <ObjectNumber number="{ui>amountPostingDisplay}" unit="{ui>postingCurrency}" />
+                                        <ObjectIdentifier
+                                            title="{ui>suggestedAccount}"
+                                            text="{ui>suggestedCategory}"
+                                            titleActive="false" />
+                                        <Text
+                                            text="{ui>suggestionReason}"
+                                            wrapping="true"
+                                            maxLines="4"
+                                            textsize="11px"
+                                            tooltip="{ui>suggestionReason}" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Technical Posting JSON"
+                    expandable="true"
+                    expanded="false"
+                    class="sapUiSmallMarginTop">
+                    <content>
+                        <TextArea
+                            value="{ui>/postingPretty}"
+                            width="100%"
+                            rows="18"
+                            editable="false" />
+                    </content>
+                </Panel>
+            </VBox>
+
+            <VBox visible="{ui>/postingNoResult}">
+                <MessageStrip
+                    text="No posting proposal loaded yet. Choose a posting currency and run Posting Proposal."
+                    type="Information"
+                    showIcon="true" />
+            </VBox>
+        </VBox>
+    </IconTabFilter>
+</core:FragmentDefinition>

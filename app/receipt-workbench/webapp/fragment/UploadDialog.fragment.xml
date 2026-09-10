@@ -1,0 +1,46 @@
+<core:FragmentDefinition
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core"
+  xmlns:u="sap.ui.unified">
+  <Dialog
+    id="uploadDialog"
+    title="Upload Receipt PDF"
+    contentWidth="30rem"
+    draggable="true"
+    resizable="true">
+    <VBox class="sapUiMediumMargin" renderType="Bare">
+      <MessageStrip
+        text="Choose a PDF receipt. The file will be uploaded to CopilotService and saved as a new Receipt record."
+        type="Information"
+        showIcon="true"
+        class="sapUiTinyMarginBottom" />
+      <u:FileUploader
+        id="receiptFileUploader"
+        width="100%"
+        buttonText="Choose PDF"
+        fileType="pdf"
+        mimeType="application/pdf"
+        sameFilenameAllowed="true"
+        change=".onUploadFileChange" />
+      <Text
+        text="{= ${ui>/uploadFileName} ? 'Selected: ' + ${ui>/uploadFileName} : 'No file selected' }"
+        class="sapUiSmallMarginTop sapUiTinyMarginBottom" />
+      <CheckBox
+        selected="{ui>/uploadAutoExtract}"
+        text="Run extraction automatically after upload" />
+    </VBox>
+    <beginButton>
+      <Button
+        text="Upload"
+        type="Emphasized"
+        enabled="{= !!${ui>/uploadFileName} &amp;&amp; !${ui>/uploadBusy} }"
+        press=".onUploadReceiptConfirm" />
+    </beginButton>
+    <endButton>
+      <Button
+        text="Cancel"
+        enabled="{= !${ui>/uploadBusy} }"
+        press=".onCloseUploadDialog" />
+    </endButton>
+  </Dialog>
+</core:FragmentDefinition>

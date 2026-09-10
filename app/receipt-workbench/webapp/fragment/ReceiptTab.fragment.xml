@@ -1,0 +1,224 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:form="sap.ui.layout.form"
+>
+    <IconTabFilter key="receipt">
+        <VBox class="sapUiSmallMargin">
+
+            <!-- State 1: no receipt selected -->
+            <VBox visible="{ui>/noEditableReceipt}">
+                <MessageStrip
+                    text="No receipt selected yet. Upload or select a receipt first."
+                    type="Information"
+                    showIcon="true" />
+            </VBox>
+
+            <!-- State 2 + 3: a receipt is selected -->
+            <VBox visible="{= !${ui>/noEditableReceipt} }">
+
+                <!-- Selected receipt exists, but has not been extracted yet -->
+                <VBox visible="{= !${ui>/hasEditableReceipt} }">
+                    <MessageStrip
+                        text="No extracted receipt data yet. Extract the receipt to populate these fields."
+                        type="Information"
+                        showIcon="true"
+                        class="sapUiTinyMarginBottom" />
+
+                    <HBox justifyContent="End" class="sapUiTinyMarginBottom">
+                        <Button
+                            text="Extract receipt"
+                            type="Emphasized"
+                            icon="sap-icon://document-text"
+                            press=".onExtract" />
+                    </HBox>
+                </VBox>
+
+                <!-- Extracted receipt exists -->
+                <MessageStrip
+                    visible="{ui>/hasEditableReceipt}"
+                    text="Review the extracted receipt data. Correct fields if needed, then accept the corrected data."
+                    type="Information"
+                    showIcon="true"
+                    class="sapUiTinyMarginBottom" />
+
+                <Panel
+                    headerText="Receipt Header"
+                    expandable="false"
+                    class="sapUiSmallMarginBottom">
+
+                    <content>
+                        <form:SimpleForm
+                            editable="true"
+                            layout="ResponsiveGridLayout"
+                            labelSpanXL="3"
+                            labelSpanL="3"
+                            labelSpanM="4"
+                            labelSpanS="12"
+                            columnsXL="2"
+                            columnsL="2"
+                            columnsM="1">
+
+                            <form:content>
+                                <Label text="Document Type" />
+                                <Input
+                                    value="{ui>/editableReceipt/documentType}"
+                                    enabled="{ui>/hasEditableReceipt}" />
+
+                                <Label text="Receipt No" />
+                                <Input
+                                    value="{ui>/editableReceipt/receiptNo}"
+                                    enabled="{ui>/hasEditableReceipt}" />
+
+                                <Label text="Receipt Date" />
+                                <DatePicker
+                                    value="{ui>/editableReceipt/receiptDate}"
+                                    valueFormat="yyyy-MM-dd"
+                                    displayFormat="yyyy-MM-dd"
+                                    enabled="{ui>/hasEditableReceipt}" />
+
+                                <Label text="Travel ID" />
+                                <Input
+                                    value="{ui>/editableReceipt/travelId}"
+                                    enabled="{ui>/hasEditableReceipt}" />
+
+                                <Label text="Supplier" />
+                                <Input
+                                    value="{ui>/editableReceipt/supplier}"
+                                    enabled="{ui>/hasEditableReceipt}" />
+
+                                <Label text="Currency" />
+                                <Input
+                                    value="{ui>/editableReceipt/currency}"
+                                    maxLength="3"
+                                    enabled="{ui>/hasEditableReceipt}" />
+
+                                <Label text="Total Amount" />
+                                <Input
+                                    value="{ui>/editableReceipt/totalAmount}"
+                                    type="Number"
+                                    enabled="{ui>/hasEditableReceipt}" />
+                            </form:content>
+                        </form:SimpleForm>
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Receipt Items"
+                    expandable="false"
+                    class="sapUiSmallMarginBottom">
+
+                    <content>
+                        <Table
+                            id="editableReceiptItemsTable"
+                            items="{ui>/editableReceipt/items}"
+                            noDataText="No extracted items found."
+                            sticky="ColumnHeaders">
+
+                            <columns>
+                                <Column width="5.5rem">
+                                    <Text text="Type" wrapping="false" />
+                                </Column>
+
+                                <Column>
+                                    <Text text="Description" wrapping="false" />
+                                </Column>
+
+                                <Column width="6rem" hAlign="End">
+                                    <Text text="Amount" wrapping="false" />
+                                </Column>
+
+                                <Column width="5rem">
+                                    <Text text="Currency" wrapping="false" />
+                                </Column>
+
+                                <Column width="4rem">
+                                    <Text text="Carrier" wrapping="false" />
+                                </Column>
+
+                                <Column width="5rem">
+                                    <Text text="Flight No" wrapping="false" />
+                                </Column>
+
+                                <Column width="5rem">
+                                    <Text text="Booking" wrapping="false" />
+                                </Column>
+
+                                <Column width="8.5rem">
+                                    <Text text="Flight Date" wrapping="false" />
+                                </Column>
+
+                                <Column width="3rem" hAlign="Center">
+                                    <Text text="" />
+                                </Column>
+                            </columns>
+
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Input value="{ui>type}" />
+                                        <Input value="{ui>description}" />
+                                        <Input value="{ui>amount}" type="Number" textAlign="End" />
+                                        <Input value="{ui>currency}" maxLength="3" />
+                                        <Input value="{ui>carrierId}" />
+                                        <Input value="{ui>flightNumber}" />
+                                        <Input value="{ui>bookingId}" />
+                                        <DatePicker
+                                            value="{ui>flightDate}"
+                                            valueFormat="yyyy-MM-dd"
+                                            displayFormat="yyyy-MM-dd" />
+
+                                        <Button
+                                            icon="sap-icon://delete"
+                                            type="Transparent"
+                                            tooltip="Remove item"
+                                            press=".onRemoveExtractedItem" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+
+                        <OverflowToolbar class="sapUiTinyMarginTop">
+                            <Button
+                                text="Add Item"
+                                icon="sap-icon://add"
+                                enabled="{ui>/hasEditableReceipt}"
+                                press=".onAddExtractedItem" />
+
+                            <ToolbarSpacer />
+
+                            <Button
+                                text="Reset"
+                                icon="sap-icon://reset"
+                                enabled="{ui>/hasEditableReceipt}"
+                                press=".onResetExtractedData" />
+
+                            <Button
+                                text="Accept Corrected Data"
+                                type="Emphasized"
+                                icon="sap-icon://accept"
+                                enabled="{ui>/hasEditableReceipt}"
+                                press=".onAcceptExtractedData" />
+                        </OverflowToolbar>
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Technical Extracted JSON"
+                    expandable="true"
+                    expanded="false"
+                    visible="{ui>/hasEditableReceipt}">
+
+                    <content>
+                        <TextArea
+                            value="{ui>/selectedReceipt}"
+                            width="100%"
+                            rows="14"
+                            editable="false" />
+                    </content>
+                </Panel>
+
+            </VBox>
+        </VBox>
+    </IconTabFilter>
+</core:FragmentDefinition>

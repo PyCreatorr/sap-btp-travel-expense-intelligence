@@ -1,0 +1,76 @@
+{
+  "name": "expense-copilot-cap",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cds-serve",
+    "watch": "cds watch",
+    "test": "node --test test/validate.unit.test.js",
+    "test:integration": "node --test test/validate.integration.test.js"
+  },
+  "cds": {
+    "requires": {
+      "db": {
+        "kind": "sqlite",
+        "credentials": {
+          "url": "db_enriched_geo.sqlite"
+        }
+      },
+      "[hana]": {
+        "db": {
+          "kind": "hana",
+          "credentials": {}
+        }
+      },
+      "[test]": {
+        "db": {
+          "kind": "sqlite",
+          "credentials": {
+            "url": ":memory:"
+          }
+        }
+      },
+      "ABAP_CUSTOMER": {
+        "kind": "odata-v4",
+        "model": "srv/external/metadata",
+        "service": "metadata",
+        "credentials": {
+          "destination": "ABAP_TRIAL_C",
+          "path": "/sap/opu/odata4/sap/ztp_ui_customer_o4_api_t/srvd_a2x/sap/ztp_ui_customer_t/0001"
+        }
+      },
+      "metadata": {
+        "kind": "odata",
+        "model": "srv/external/metadata"
+      },
+      "[production]": {
+        "auth": "xsuaa",
+        "destinations": true,
+        "html5-repo": true,
+        "db": {
+          "kind": "hana"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@cap-js/hana": "^2",
+    "@cap-js/sqlite": "^2.1.3",
+    "@google/genai": "^1.47.0",
+    "@sap-cloud-sdk/connectivity": "^4.5.1",
+    "@sap-cloud-sdk/http-client": "^4.5.1",
+    "@sap-cloud-sdk/resilience": "^4.5.1",
+    "@sap/cds": "^9.7.1",
+    "@sap/xssec": "^4",
+    "dotenv": "^17.3.1",
+    "multer": "^2.1.1",
+    "openai": "^6.25.0",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@cap-js/cds-test": "^1.0.1",
+    "@sap/cds-dk": "^9.9.2",
+    "@ui5/cli": "^3.0.0",
+    "ui5-middleware-simpleproxy": "^3.7.0"
+  }
+}

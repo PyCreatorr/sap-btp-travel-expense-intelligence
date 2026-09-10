@@ -1,0 +1,15 @@
+{
+  "name": "receipt-workbench",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@ui5/cli": "^4.0.60",
+    "ui5-middleware-simpleproxy": "^3.7.0",
+    "ui5-task-zipper": "^3"
+  },
+  "main": "webapp/index.html",
+  "scripts": {
+    "build": "ui5 build preload --clean-dest",
+    "start": "ui5 serve"
+  }
+}

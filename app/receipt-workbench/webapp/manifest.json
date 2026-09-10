@@ -1,0 +1,61 @@
+{
+  "sap.app": {
+    "id": "demo.copilot.receiptworkbench",
+    "type": "application",
+    "title": "Receipt Workbench",
+    "applicationVersion": {
+      "version": "1.0.1"
+    },
+    "dataSources": {
+      "copilotService": {
+        "uri": "/odata/v4/copilot/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "4.0"
+        }
+      }
+    },
+    "description": "A simple CAP project.",
+    "i18n": "i18n/i18n.properties"
+  },
+  "sap.ui5": {
+    "dependencies": {
+      "minUI5Version": "1.120.0",
+      "libs": {
+        "sap.ui.core": {},
+        "sap.m": {},
+        "sap.f": {},
+        "sap.ui.unified": {},
+        "sap.suite.ui.microchart": {},
+        "sap.viz": {}
+      }
+    },
+    "models": {
+      "": {
+        "type": "sap.ui.model.odata.v4.ODataModel",
+        "dataSource": "copilotService",
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "synchronizationMode": "None"
+        }
+      },
+      "ui": {
+        "type": "sap.ui.model.json.JSONModel"
+      }
+    },
+    "rootView": {
+      "viewName": "demo.copilot.receiptworkbench.view.Workbench",
+      "type": "XML",
+      "async": true
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    }
+  },
+  "_version": "1.49.0"
+}

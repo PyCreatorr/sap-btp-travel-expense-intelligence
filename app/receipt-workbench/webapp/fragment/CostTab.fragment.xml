@@ -1,0 +1,953 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:viz="sap.viz.ui5.controls"
+    xmlns:viz.data="sap.viz.ui5.data"
+    xmlns:viz.feeds="sap.viz.ui5.controls.common.feeds">
+
+    <IconTabFilter key="cost">
+        <VBox class="sapUiSmallMargin">
+
+            <MessageStrip
+                text="Cost Efficiency answers the business question: is the receipt airfare reasonable compared with comparable DMO flight prices, and should the company accept, review, or reject the cost?"
+                type="Information"
+                showIcon="true"
+                class="sapUiTinyMarginBottom" />
+
+            <Panel
+                headerText="What does Cost Efficiency answer?"
+                expandable="true"
+                expanded="false"
+                class="sapUiSmallMarginBottom">
+                <content>
+                    <List>
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Global business question"
+                            description="This tab answers whether the receipt airfare is economically reasonable compared with available DMO flight alternatives. It also says whether the answer is final, partial, or not assessable." />
+
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Input used"
+                            description="It uses the receipt's extracted travel ID, flight legs and airfare items, then loads the DMO travel and bookings itself. It does not simply reuse the visible result from Match Travel Data." />
+
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Receipt integrity first"
+                            description="Before judging cost efficiency, the service checks each extracted receipt flight leg against DMO bookings by carrier, connection or flight number, date, and route. Unmatched legs make the result suspicious or partial." />
+ 
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Benchmark comparison"
+                            description="For each credible flight leg, the selected receipt or DMO booked fare is compared with comparable DMO flight alternatives. The benchmark can be exact, expanded by date, or expanded by nearby airports depending on the filter settings." />
+
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Decision produced"
+                            description="The tab converts the comparison into GOOD, ACCEPTABLE, REVIEW, INSUFFICIENT_DATA, PARTIAL_ONLY, or NOT_ASSESSABLE. If receipt integrity is suspicious, the final economic decision is blocked and only partial benchmark values are shown." />
+
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Currency handling"
+                            description="The source currency shows the original purchase view. The company decision currency shows the normalized view used for the final business decision." />
+
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Boundary of this tab"
+                            description="This tab does its own booking selection for cost assessment. It can verify, partially assess, or reject a receipt based on whether extracted receipt legs are found in DMO bookings. It does not prove the employee/customer identity as deeply as Match Travel Data." />
+
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Fallback case"
+                            description="If the receipt has no structured flight legs, the service cannot verify individual legs. In that case it uses all DMO travel bookings and marks the result as needing careful review, not as a strongly verified decision." />
+                    </List>
+                </content>
+            </Panel>
+
+            <Panel headerText="Benchmark settings Help" expandable="true" expanded="false" class="sapUiSmallMarginBottom">
+                <content>
+
+                    <List>
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Expand benchmark (Flights)"
+                            description="Minimum number of comparable flights wanted before the benchmark is considered strong. If fewer flights are found, the benchmark search can be expanded." />
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="± days"
+                            description="Allows comparison flights from nearby travel dates when the exact flight date does not provide enough comparables." />
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Radius nearby (km)"
+                            description="In the main benchmark, nearby airports can strengthen a thin comparison market while exact-route flights remain preferred. The separate opportunity explorer uses the same GPS radius but excludes the original route completely." />
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Acceptable"
+                            description="Tolerance used for the business decision. Example: if the selected airfare is within the accepted percentage over the benchmark, it can still be acceptable." />
+                        <StandardListItem wrapping="true" wrapCharLimit="500"
+                            title="Currency Decision"
+                            description="Currency used for the final company view. This makes decisions comparable even when the receipt source currency is different." />
+                    </List>
+                </content>
+            </Panel>
+            <Panel
+                headerText="Benchmark settings"
+                visible="true"
+                class="sapUiSmallMarginBottom">
+                <content>
+                    <MessageStrip
+                        text="Tune the benchmark search before running Assess Cost. These values control how broad the comparison market becomes."
+                        type="Information"
+                        showIcon="true"
+                        class="sapUiTinyMarginBottom" />
+
+                    <VBox width="100%" class="sapUiTinyMarginTop">
+                
+                        <HBox
+                            width="100%"
+                            alignItems="End"
+                            justifyContent="Start"
+                            renderType="Bare"
+                            wrap="NoWrap"
+                            class="sapUiTinyMarginTop">
+
+                            <VBox width="7rem" class="sapUiSmallMarginEnd">
+                                <Label text="Expand benchmark (Flights)" labelFor="costMinComparables" wrapping="true" />
+                                <StepInput
+                                    id="costMinComparables"
+                                    width="100%"
+                                    min="1"
+                                    step="1"
+                                    value="{ui&gt;/costFilters/benchmarkExpansionThreshold}"
+                                    change=".onCostFilterChange" />
+                            </VBox>
+
+                            <VBox width="7rem" class="sapUiSmallMarginEnd">
+                                <Label text="± days" labelFor="costExpandedWindowDays" />
+                                <StepInput
+                                    id="costExpandedWindowDays"
+                                    width="100%"
+                                    min="0"
+                                    step="1"
+                                    value="{ui&gt;/costFilters/expandedWindowDays}"
+                                    change=".onCostFilterChange" />
+                            </VBox>
+
+                            <VBox width="8rem" class="sapUiSmallMarginEnd">
+                                <Label text="Radius nearby (km)" labelFor="costNearbyRadiusKm" />
+                                <StepInput
+                                    id="costNearbyRadiusKm"
+                                    width="100%"
+                                    min="1"
+                                    step="10"
+                                    value="{ui&gt;/costFilters/nearbyRadiusKm}"
+                                    change=".onCostFilterChange" />
+                            </VBox>
+
+                            <VBox width="7rem" class="sapUiSmallMarginEnd">
+                                <Label text="Acceptable" />
+                                <ComboBox
+                                    width="100%"
+                                    selectedKey="{ui&gt;/costFilters/acceptableThresholdPercent}"
+                                    items="{ path: 'ui&gt;/costFilters/acceptableThresholdOptions', templateShareable: false}"
+                                    change=".onCostFilterChange">
+                                    <core:Item key="{ui&gt;key}" text="{ui&gt;text}" />
+                                </ComboBox>
+                            </VBox>
+
+                            <VBox width="7rem" class="sapUiSmallMarginEnd">
+                                <Label text="Currency Decision" labelFor="costDecisionCurrency" />
+                                <ComboBox
+                                    id="costDecisionCurrency"
+                                    width="100%"
+                                    selectedKey="{ui&gt;/costFilters/decisionCurrency}"
+                                    items="{ path: 'ui&gt;/currencyOptions', templateShareable: false}"
+                                    change=".onCostFilterChange"
+                                    selectionChange=".onCostFilterChange">
+                                    <core:Item key="{ui&gt;key}" text="{ui&gt;text}" />
+                                </ComboBox>
+                            </VBox>
+
+                            <VBox width="9rem">
+                                <Label text="Action" />
+                                <Button
+                                    width="100%"
+                                    text="Run with filters"
+                                    type="Emphasized"
+                                    press=".onAssessCost" />
+                            </VBox>
+                        </HBox>
+
+                    </VBox>
+                </content>
+            </Panel>
+
+
+
+
+            <VBox visible="{= !!${ui&gt;/cost/receiptId} }">
+
+                <Panel
+                    headerText="Receipt integrity"
+                    visible="{ui&gt;/cost/integrityVisible}"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+
+                        <MessageStrip
+                            text="This block answers: can the receipt be trusted for cost assessment? Only matched and credible receipt flight legs should be used for the benchmark. Unmatched legs are listed separately so the final decision does not hide suspicious data."
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+                        <HBox justifyContent="SpaceBetween" alignItems="Center" wrap="Wrap" class="sapUiTinyMarginBottom">
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H4" text="Credibility check" />
+                                <ObjectStatus
+                                    text="{ui&gt;/cost/integrityStatus}"
+                                    state="{ui&gt;/cost/integrityStatusState}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Label text="Cost assessment" />
+                                <ObjectStatus
+                                    text="{ui&gt;/cost/costAssessmentStatus}"
+                                    state="{ui&gt;/cost/costAssessmentStatusState}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Label text="Matched receipt legs" />
+                                <Text text="{= ${ui&gt;/cost/matchedReceiptFlightLegCount} + ' of ' + ${ui&gt;/cost/receiptFlightLegCount} }" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginBottom">
+                                <Label text="Unmatched receipt legs" />
+                                <ObjectNumber number="{ui&gt;/cost/unmatchedReceiptFlightLegCount}" />
+                            </VBox>
+                        </HBox>
+
+                        <MessageStrip
+                            text="{ui&gt;/cost/integrityMessage}"
+                            type="Warning"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+
+                        <FlexBox wrap="Wrap" renderType="Bare" class="sapUiTinyMarginBottom">
+                            <VBox width="22rem" class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Text text="{ui&gt;/cost/assessedAirfareText}" wrapping="true" />
+                            </VBox>
+                            <VBox width="22rem" class="sapUiSmallMarginBottom">
+                                <Text text="{ui&gt;/cost/unassessedAirfareText}" wrapping="true" />
+                            </VBox>
+                        </FlexBox>
+
+                        <List
+                            headerText="Unmatched receipt flight legs"
+                            visible="{= ${ui&gt;/cost/unmatchedReceiptFlightLegCount} &gt; 0 }"
+                            items="{ path: 'ui&gt;/cost/unmatchedReceiptFlightLegs', templateShareable: false}">
+                            <StandardListItem
+                                title="{ui&gt;legTitle}"
+                                description="{= ${ui&gt;legDetailText} + ' · ' + ${ui&gt;estimatedAirfareText} + ' · ' + ${ui&gt;reasonText} }"
+                                icon="sap-icon://alert" />
+                        </List>
+                    </content>
+                </Panel>
+
+                <Panel headerText="Final business decision" class="sapUiSmallMarginBottom">
+                    <content>
+
+                        <MessageStrip
+                            text="This block answers the final approval question: based on the assessed airfare, benchmark airfare, benchmark quality, and accepted tolerance, should the company accept the cost or review it?"
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+                        <HBox justifyContent="SpaceBetween" alignItems="Center" wrap="Wrap" class="sapUiTinyMarginBottom">
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H3" text="Company decision" />
+                                <ObjectStatus
+                                    text="{ui&gt;/cost/overallStatus}"
+                                    state="{ui&gt;/cost/overallStatusState}" />
+                                <Text text="{= 'Shown in ' + ${ui&gt;/cost/decisionCurrency} }" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Label text="Assessed airfare" />
+                                <ObjectNumber
+                                    number="{ui&gt;/cost/decisionCurrencyDecision/selectedTotal}"
+                                    unit="{ui&gt;/cost/decisionCurrencyDecision/currency}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Label text="Benchmark airfare" />
+                                <ObjectNumber
+                                    number="{ui&gt;/cost/decisionCurrencyDecision/benchmarkTotal}"
+                                    unit="{ui&gt;/cost/decisionCurrencyDecision/currency}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginBottom">
+                                <Label text="Source decision" />
+                                <ObjectStatus
+                                    text="{ui&gt;/cost/sourceOverallStatus}"
+                                    state="{ui&gt;/cost/sourceOverallStatusState}" />
+                                <Text text="{= ${ui&gt;/cost/sourceCurrency} + ' purchase view' }" />
+                            </VBox>
+                        </HBox>
+
+                        <MessageStrip
+                            text="{ui&gt;/cost/rationale}"
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+
+                        <MessageStrip
+                            visible="{ui&gt;/cost/partialOnlyVisible}"
+                            text="{ui&gt;/cost/partialBenchmarkSummaryText}"
+                            type="Warning"
+                            showIcon="true" />
+                    </content>
+                </Panel>
+
+                <Panel headerText="Decision" class="sapUiSmallMarginBottom">
+                    <content>
+
+                        <MessageStrip
+                            text="This block explains the same decision from two viewpoints: company currency for the official decision, and source currency for the original purchase view. Benchmark quality explains how reliable the comparison market is."
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+                        <FlexBox wrap="Wrap" renderType="Bare">
+                            <VBox width="24rem" class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Company currency" />
+                                <ObjectStatus
+                                    text="{ui&gt;/cost/overallStatus}"
+                                    state="{ui&gt;/cost/overallStatusState}" />
+                                <Text text="{ui&gt;/cost/decisionSummaryText}" wrapping="true" />
+                                <Text visible="{ui&gt;/cost/partialOnlyVisible}" text="{ui&gt;/cost/partialDecisionSummaryText}" wrapping="true" />
+                                <Text text="{ui&gt;/cost/fullReceiptSummaryText}" wrapping="true" />
+                            </VBox>
+
+                            <VBox width="24rem" class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Source currency" />
+                                <ObjectStatus
+                                    text="{ui&gt;/cost/sourceOverallStatus}"
+                                    state="{ui&gt;/cost/sourceOverallStatusState}" />
+                                <Text text="{ui&gt;/cost/sourceSummaryText}" wrapping="true" />
+                                <Text text="{ui&gt;/cost/fxSummaryText}" wrapping="true" />
+                            </VBox>
+
+                            <VBox width="24rem" class="sapUiSmallMarginBottom">
+                                <Title level="H5" text="Benchmark quality" />
+                                <ObjectStatus text="{ui&gt;/cost/benchmarkStrength}" />
+                                <Text text="{ui&gt;/cost/benchmarkSummaryText}" wrapping="true" />
+                            </VBox>
+                        </FlexBox>
+                    </content>
+                </Panel>
+
+                <Panel headerText="Flight legs" class="sapUiSmallMarginBottom">
+                    <content>
+                        <MessageStrip
+                            text="Select one leg below. The chart and alternatives update for the selected grouped leg only."
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+
+                        <MessageStrip
+                            visible="{ui&gt;/cost/partialOnlyVisible}"
+                            text="Only matched/credible legs are benchmarked here. Unmatched suspicious receipt legs are listed in the Receipt integrity section."
+                            type="Warning"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+
+                        <Panel
+                            headerText="How to read one flight leg"
+                            expandable="true"
+                            expanded="false"
+                            class="sapUiTinyMarginBottom">
+                            <content>
+                                <List>
+                                    <StandardListItem wrapping="true" wrapCharLimit="500"
+                                        title="Selected total"
+                                        description="The amount being assessed for this grouped leg. It can come from the matched booking or receipt airfare, depending on the backend result." />
+                                    <StandardListItem wrapping="true" wrapCharLimit="500"
+                                        title="Benchmark total"
+                                        description="The comparison price selected from comparable DMO flight alternatives for the same or expanded market." />
+                                    <StandardListItem wrapping="true" wrapCharLimit="500"
+                                        title="Passengers"
+                                        description="Number of receipt-relevant passengers included in this grouped leg. This prevents other passengers on the same travel from inflating the cost decision." />
+                                    <StandardListItem wrapping="true" wrapCharLimit="500"
+                                        title="Status"
+                                        description="Leg-level decision showing whether this selected leg cost is acceptable compared with the benchmark and threshold." />
+                                    <StandardListItem wrapping="true" wrapCharLimit="500"
+                                        title="Alternatives"
+                                        description="Benchmark, cheapest, reference, and all alternatives explain why the benchmark was chosen and what other comparable prices were available." />
+                                </List>
+                            </content>
+                        </Panel>
+
+                        <SegmentedButton
+                            width="100%"
+                            selectedKey="{ui>/cost/activeLegKey}"
+                            selectionChange=".onCostLegSelectionChange"
+                            items="{ path: 'ui>/cost/legGroups', templateShareable: false}"
+                            class="sapUiTinyMarginBottom">
+                            <items>
+                                <SegmentedButtonItem key="{ui>legKey}" text="{ui>legTabText}" />
+                            </items>
+                        </SegmentedButton>
+
+                        <VBox visible="{= !!${ui>/cost/activeLegGroup/legKey} }" class="sapUiSmallMarginTop">
+                            <HBox justifyContent="SpaceBetween" alignItems="Center" wrap="Wrap" class="sapUiTinyMarginBottom">
+                                <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                    <Title level="H4" text="{ui>/cost/activeLegGroup/lineTitle}" />
+                                    <Text text="{ui>/cost/activeLegGroup/lineSubtitle}" wrapping="true" />
+                                    <Text text="{ui>/cost/activeLegGroup/benchmarkMetaText}" wrapping="true" />
+                                </VBox>
+                                <ObjectStatus text="{ui>/cost/activeLegGroup/status}" state="{ui>/cost/activeLegGroup/statusState}" />
+                            </HBox>
+
+                            <FlexBox wrap="Wrap" renderType="Bare" class="sapUiTinyMarginBottom">
+                                <VBox width="12rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                    <Label text="Selected total" />
+                                    <ObjectNumber number="{ui>/cost/activeLegGroup/selectedTotalDisplay}" unit="{ui>/cost/activeLegGroup/decisionCurrency}" />
+                                </VBox>
+                                <VBox width="12rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                    <Label text="Benchmark total" />
+                                    <ObjectNumber number="{ui>/cost/activeLegGroup/benchmarkTotalDisplay}" unit="{ui>/cost/activeLegGroup/decisionCurrency}" />
+                                </VBox>
+                                <VBox width="12rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                    <Label text="Passengers" />
+                                    <ObjectNumber number="{ui>/cost/activeLegGroup/passengerCount}" />
+                                </VBox>
+                                <VBox width="18rem" class="sapUiTinyMarginBottom">
+                                    <Label text="Source view" />
+                                    <Text text="{ui>/cost/activeLegGroup/sourceTotalsText}" wrapping="true" />
+                                </VBox>
+                            </FlexBox>
+
+                            <MessageStrip
+                                text="{ui>/cost/activeLegGroup/rationale}"
+                                type="Information"
+                                showIcon="true"
+                                class="sapUiTinyMarginBottom" />
+
+                            <Panel headerText="Visible price chart" class="sapUiTinyMarginBottom">
+                                <content>
+                                    <Text
+                                        text="{ui>/cost/activeLegGroup/graphHelpText}"
+                                        wrapping="true"
+                                        class="sapUiTinyMarginBottom" />
+                                    <viz:VizFrame
+                                        width="100%"
+                                        height="380px"
+                                        vizType="line"
+                                        uiConfig="{applicationSet:'fiori'}"
+                                        vizProperties="{ui>/cost/activeLegGroup/graphVizProperties}">
+                                        <viz:dataset>
+                                            <viz.data:FlattenedDataset data="{ui>/cost/activeLegGroup/graphPoints}">
+                                                <viz.data:dimensions>
+                                                    <viz.data:DimensionDefinition name="Flight" value="{ui>flight}" />
+                                                </viz.data:dimensions>
+                                                <viz.data:measures>
+                                                    <viz.data:MeasureDefinition name="Flight Price" value="{ui>price}" />
+                                                    <viz.data:MeasureDefinition name="Selected" value="{ui>selectedLine}" />
+                                                    <viz.data:MeasureDefinition name="Benchmark" value="{ui>benchmarkLine}" />
+                                                    <viz.data:MeasureDefinition name="Cheapest" value="{ui>cheapestLine}" />
+                                                    <viz.data:MeasureDefinition name="Reference" value="{ui>referenceLine}" />
+                                                </viz.data:measures>
+                                            </viz.data:FlattenedDataset>
+                                        </viz:dataset>
+                                        <viz:feeds>
+                                            <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="Flight Price,Selected,Benchmark,Cheapest,Reference" />
+                                            <viz.feeds:FeedItem uid="categoryAxis" type="Dimension" values="Flight" />
+                                        </viz:feeds>
+                                    </viz:VizFrame>
+                                </content>
+                            </Panel>
+
+                            <Panel expandable="true" expanded="false" headerText="Alternatives">
+                                <content>
+                                    <FlexBox wrap="Wrap" renderType="Bare" class="sapUiTinyMarginBottom">
+                                        <Panel width="15rem" headerText="Benchmark" class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                            <content>
+                                                <ObjectNumber number="{ui>/cost/activeLegGroup/benchmarkAlternative/price}" unit="{ui>/cost/activeLegGroup/benchmarkAlternative/currency}" />
+                                                <Text text="{ui>/cost/activeLegGroup/benchmarkAlternative/displayTitle}" wrapping="true" />
+                                                <Text text="{ui>/cost/activeLegGroup/benchmarkAlternative/detailText}" wrapping="true" />
+                                            </content>
+                                        </Panel>
+
+                                        <Panel width="15rem" headerText="Cheapest" class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                            <content>
+                                                <ObjectNumber number="{ui>/cost/activeLegGroup/cheapestAlternative/price}" unit="{ui>/cost/activeLegGroup/cheapestAlternative/currency}" />
+                                                <Text text="{ui>/cost/activeLegGroup/cheapestAlternative/displayTitle}" wrapping="true" />
+                                                <Text text="{ui>/cost/activeLegGroup/cheapestAlternative/detailText}" wrapping="true" />
+                                            </content>
+                                        </Panel>
+
+                                        <Panel width="15rem" headerText="Reference" class="sapUiSmallMarginBottom">
+                                            <content>
+                                                <ObjectNumber number="{ui>/cost/activeLegGroup/referenceAlternative/price}" unit="{ui>/cost/activeLegGroup/referenceAlternative/currency}" />
+                                                <Text text="{ui>/cost/activeLegGroup/referenceAlternative/displayTitle}" wrapping="true" />
+                                                <Text text="{ui>/cost/activeLegGroup/referenceAlternative/detailText}" wrapping="true" />
+                                            </content>
+                                        </Panel>
+                                    </FlexBox>
+
+                                    <Table items="{ path: 'ui>/cost/activeLegGroup/allAlternatives', templateShareable: false}" sticky="ColumnHeaders">
+                                        <columns>
+                                            <Column><Text text="Role" /></Column>
+                                            <Column><Text text="Carrier" /></Column>
+                                            <Column><Text text="Connection" /></Column>
+                                            <Column><Text text="Date" /></Column>
+                                            <Column><Text text="Route" /></Column>
+                                            <Column hAlign="End"><Text text="Price" /></Column>
+                                            <Column><Text text="Scope" /></Column>
+                                        </columns>
+                                        <items>
+                                            <ColumnListItem>
+                                                <cells>
+                                                    <Text text="{ui>roleText}" />
+                                                    <Text text="{ui>carrierId}" />
+                                                    <Text text="{ui>connectionId}" />
+                                                    <Text text="{ui>flightDate}" />
+                                                    <Text text="{= ${ui>routeFrom} + ' → ' + ${ui>routeTo} }" />
+                                                    <ObjectNumber number="{ui>price}" unit="{ui>currency}" />
+                                                    <ObjectStatus text="{ui>scope}" />
+                                                </cells>
+                                            </ColumnListItem>
+                                        </items>
+                                    </Table>
+                                </content>
+                            </Panel>
+                        </VBox>
+
+                        <MessageStrip
+                            visible="{= !${ui>/cost/activeLegGroup/legKey} }"
+                            text="No grouped flight leg is available for this receipt."
+                            type="Information"
+                            showIcon="true" />
+                    </content>
+                </Panel>
+
+                <Panel expandable="true"
+                    expanded="false"
+                    class="sapUiSmallMarginBottom">
+                    <headerToolbar>
+                        <Toolbar>
+                            <Title text="Optional: Nearby-airport opportunities" level="H4" />
+                            <ToolbarSpacer />
+                            <ObjectStatus
+                                visible="{= !!${ui&gt;/costOpportunity/receiptId} }"
+                                text="{ui&gt;/costOpportunity/overallStatus}"
+                                state="{ui&gt;/costOpportunity/overallStatusState}"
+                                class="sapUiTinyMarginEnd" />
+                            <Button
+                                text="Check cheaper opportunities"
+                                icon="sap-icon://map-2"
+                                type="Attention"
+                                tooltip="Run the optional nearby-airport comparison. It does not change the main Cost Efficiency decision."
+                                busy="{ui&gt;/opportunityBusy}"
+                                enabled="{= !${ui&gt;/opportunityBusy} }"
+                                press=".onCheckCheaperOpportunities" />
+                        </Toolbar>
+                    </headerToolbar>
+                    <content>
+                        <MessageStrip
+                            text="Optional advisory tool: it excludes the original booked route completely and searches for different routes through nearby airports found from GPS coordinates. Its result never changes the main Cost Efficiency decision."
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+
+                        <Panel
+                            headerText="What does this additional check bring?"
+                            expandable="true"
+                            expanded="false"
+                            class="sapUiTinyMarginBottom">
+                            <content>
+                                <List>
+                                    <StandardListItem
+                                        title="Separate from the official decision"
+                                        description="The normal benchmark answers whether the purchased fare was commercially reasonable for the booked route. This explorer only adds supporting evidence and never overwrites GOOD, ACCEPTABLE, REVIEW, or NOT_ASSESSABLE." />
+                                    <StandardListItem
+                                        title="Original route is excluded"
+                                        description="For EWR → MIA, this check deliberately removes EWR → MIA and searches routes such as JFK → MIA, EWR → FLL, or JFK → FLL." />
+                                    <StandardListItem
+                                        title="GPS radius becomes visible"
+                                        description="The service reads airport latitude and longitude from the enriched database, calculates distances, and shows which origin and destination airports were found inside the selected radius." />
+                                    <StandardListItem
+                                        title="Adjusted commercial comparison"
+                                        description="A cheaper flight is not automatically better. The tool adds an estimated extra cost for each changed airport and passenger, then calculates gross saving, adjusted cost, and net saving." />
+                                    <StandardListItem
+                                        title="Materiality thresholds"
+                                        description="Only a net saving that reaches both the configured amount and percentage is marked as a material opportunity. Smaller differences remain informational." />
+                                    <StandardListItem
+                                        title="Historical limitation"
+                                        description="The result uses the available DMO flight catalog. Without stored historical offer snapshots, it cannot prove that an alternative was actually available when the ticket was originally purchased." />
+                                </List>
+                            </content>
+                        </Panel>
+
+                        <Title level="H5" text="Opportunity settings" class="sapUiTinyMarginTop sapUiTinyMarginBottom" />
+
+                        <FlexBox
+                            wrap="Wrap"
+                            renderType="Bare"
+                            alignItems="End"
+                            class="sapUiTinyMarginTop sapUiTinyMarginBottom">
+                            <VBox width="8rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                <Label text="GPS radius (km)" labelFor="opportunityRadiusKm" />
+                                <StepInput
+                                    id="opportunityRadiusKm"
+                                    width="100%"
+                                    min="1"
+                                    step="10"
+                                    value="{ui&gt;/costFilters/nearbyRadiusKm}"
+                                    change=".onCostFilterChange" />
+                            </VBox>
+
+                            <VBox width="7rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                <Label text="± days" labelFor="opportunityWindowDays" />
+                                <StepInput
+                                    id="opportunityWindowDays"
+                                    width="100%"
+                                    min="0"
+                                    step="1"
+                                    value="{ui&gt;/costFilters/expandedWindowDays}"
+                                    change=".onCostFilterChange" />
+                            </VBox>
+
+                            <VBox width="12rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                <Label
+                                    text="Airport change cost"
+                                    labelFor="opportunityPenalty"
+                                    wrapping="false"
+                                    tooltip="Estimated extra cost per changed airport and passenger." />
+                                <StepInput
+                                    id="opportunityPenalty"
+                                    width="100%"
+                                    min="0"
+                                    step="10"
+                                    value="{ui&gt;/opportunityFilters/airportChangePenalty}"
+                                    change=".onOpportunityFilterChange" />
+                            </VBox>
+
+                            <VBox width="9rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                <Label text="Min net saving" labelFor="opportunityMinAmount" />
+                                <StepInput
+                                    id="opportunityMinAmount"
+                                    width="100%"
+                                    min="0"
+                                    step="10"
+                                    value="{ui&gt;/opportunityFilters/minimumNetSavingAmount}"
+                                    change=".onOpportunityFilterChange" />
+                            </VBox>
+
+                            <VBox width="8rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                <Label text="Min saving %" labelFor="opportunityMinPercent" />
+                                <StepInput
+                                    id="opportunityMinPercent"
+                                    width="100%"
+                                    min="0"
+                                    step="1"
+                                    value="{ui&gt;/opportunityFilters/minimumNetSavingPercent}"
+                                    change=".onOpportunityFilterChange" />
+                            </VBox>
+
+                            <VBox width="8rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                <Label text="Currency" labelFor="opportunityCurrency" />
+                                <ComboBox
+                                    id="opportunityCurrency"
+                                    width="100%"
+                                    selectedKey="{ui&gt;/costFilters/decisionCurrency}"
+                                    items="{ path: 'ui&gt;/currencyOptions', templateShareable: false}"
+                                    change=".onCostFilterChange"
+                                    selectionChange=".onCostFilterChange">
+                                    <core:Item key="{ui&gt;key}" text="{ui&gt;text}" />
+                                </ComboBox>
+                            </VBox>
+                            
+                        </FlexBox>
+
+                        <VBox visible="{= !!${ui&gt;/costOpportunity/receiptId} }" class="sapUiSmallMarginTop">
+                            <Title level="H4" text="Nearby-airport opportunity result" class="sapUiTinyMarginBottom" />
+
+                            <FlexBox wrap="Wrap" renderType="Bare" class="sapUiTinyMarginBottom">
+                                <VBox width="15rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                    <Label text="Advisory result" />
+                                    <ObjectStatus
+                                        text="{ui&gt;/costOpportunity/overallStatus}"
+                                        state="{ui&gt;/costOpportunity/overallStatusState}" />
+                                </VBox>
+                                <VBox width="15rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                    <Label text="Assessment completeness" />
+                                    <ObjectStatus
+                                        text="{ui&gt;/costOpportunity/assessmentCompleteness}"
+                                        state="{ui&gt;/costOpportunity/assessmentCompletenessState}" />
+                                </VBox>
+                                <VBox width="10rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                    <Label text="GPS radius" />
+                                    <ObjectNumber number="{ui&gt;/costOpportunity/radiusKm}" unit="km" />
+                                </VBox>
+                                <VBox width="10rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                    <Label text="Nearby airports" />
+                                    <ObjectNumber number="{ui&gt;/costOpportunity/nearbyAirportCount}" />
+                                </VBox>
+                                <VBox width="10rem" class="sapUiSmallMarginEnd sapUiTinyMarginBottom">
+                                    <Label text="Candidates checked" />
+                                    <ObjectNumber number="{ui&gt;/costOpportunity/searchedCandidateCount}" />
+                                </VBox>
+                                <VBox width="10rem" class="sapUiTinyMarginBottom">
+                                    <Label text="Material opportunities" />
+                                    <ObjectNumber number="{ui&gt;/costOpportunity/materialOpportunityCount}" />
+                                </VBox>
+                            </FlexBox>
+
+                            <MessageStrip
+                                text="{ui&gt;/costOpportunity/mainDecisionMessage}"
+                                type="Information"
+                                showIcon="true"
+                                class="sapUiTinyMarginBottom" />
+
+                            <MessageStrip
+                                text="{ui&gt;/costOpportunity/overallMessage}"
+                                type="{ui&gt;/costOpportunity/overallMessageType}"
+                                showIcon="true"
+                                class="sapUiTinyMarginBottom" />
+
+                            <Text text="{ui&gt;/costOpportunity/radiusSummaryText}" wrapping="true" />
+                            <Text text="{ui&gt;/costOpportunity/thresholdSummaryText}" wrapping="true" />
+                            <Text text="{ui&gt;/costOpportunity/gpsSummaryText}" wrapping="true" class="sapUiTinyMarginBottom" />
+
+                            <Panel
+                                headerText="GPS search area and nearby airports"
+                                expandable="true"
+                                expanded="true"
+                                class="sapUiTinyMarginBottom">
+                                <content>
+                                    <MessageStrip
+                                        text="This table makes the geolocation step transparent: it shows the source airport coordinates, each nearby airport coordinates, and the calculated distance inside the selected radius."
+                                        type="Information"
+                                        showIcon="true"
+                                        class="sapUiTinyMarginBottom" />
+                                    <Table
+                                        items="{ path: 'ui&gt;/costOpportunity/nearbyAirports', templateShareable: false}"
+                                        noDataText="No nearby airports were found inside the selected GPS radius."
+                                        sticky="ColumnHeaders">
+                                        <columns>
+                                            <Column><Text text="Area" /></Column>
+                                            <Column><Text text="Source airport" /></Column>
+                                            <Column><Text text="Source GPS" /></Column>
+                                            <Column><Text text="Nearby airport" /></Column>
+                                            <Column><Text text="City / country" /></Column>
+                                            <Column hAlign="End"><Text text="Distance" /></Column>
+                                            <Column><Text text="Nearby GPS" /></Column>
+                                        </columns>
+                                        <items>
+                                            <ColumnListItem>
+                                                <cells>
+                                                    <Text text="{ui&gt;roleText}" />
+                                                    <Text text="{ui&gt;sourceAirportId}" />
+                                                    <Text text="{ui&gt;sourceCoordinatesText}" />
+                                                    <ObjectIdentifier title="{ui&gt;airportId}" text="{ui&gt;name}" />
+                                                    <Text text="{ui&gt;cityCountryText}" />
+                                                    <ObjectNumber number="{ui&gt;distanceDisplay}" unit="km" />
+                                                    <Text text="{ui&gt;coordinatesText}" />
+                                                </cells>
+                                            </ColumnListItem>
+                                        </items>
+                                    </Table>
+                                </content>
+                            </Panel>
+
+                            <Panel
+                                headerText="Best different-route opportunity per flight leg"
+                                class="sapUiTinyMarginBottom">
+                                <content>
+                                    <Table
+                                        items="{ path: 'ui&gt;/costOpportunity/legs', templateShareable: false}"
+                                        noDataText="No matched flight legs were available for the opportunity check."
+                                        sticky="ColumnHeaders">
+                                        <columns>
+                                            <Column width="5rem"><Text text="Leg" /></Column>
+                                            <Column><Text text="Booked route" /></Column>
+                                            <Column><Text text="Best nearby route" /></Column>
+                                            <Column hAlign="End"><Text text="Passengers" /></Column>
+                                            <Column hAlign="End"><Text text="Booked total" /></Column>
+                                            <Column hAlign="End"><Text text="Adjusted alternative" /></Column>
+                                            <Column hAlign="End"><Text text="Net saving" /></Column>
+                                            <Column><Text text="Result" /></Column>
+                                        </columns>
+                                        <items>
+                                            <ColumnListItem>
+                                                <cells>
+                                                    <Text text="{ui&gt;legTitle}" />
+                                                    <ObjectIdentifier title="{ui&gt;originalRouteText}" text="{ui&gt;originalDetailText}" />
+                                                    <ObjectIdentifier title="{ui&gt;bestRouteText}" text="{ui&gt;bestAlternative/titleText}" />
+                                                    <ObjectNumber number="{ui&gt;passengerCount}" />
+                                                    <ObjectNumber number="{ui&gt;selectedTotalDisplay}" unit="{ui&gt;currency}" />
+                                                    <ObjectNumber number="{ui&gt;bestAdjustedTotalDisplay}" unit="{ui&gt;currency}" />
+                                                    <ObjectNumber number="{ui&gt;bestNetSavingDisplay}" unit="{ui&gt;currency}" />
+                                                    <ObjectStatus text="{ui&gt;status}" state="{ui&gt;statusState}" />
+                                                </cells>
+                                            </ColumnListItem>
+                                        </items>
+                                    </Table>
+                                </content>
+                            </Panel>
+
+                            <Panel
+                                headerText="All different-route candidates"
+                                expandable="true"
+                                expanded="false"
+                                class="sapUiTinyMarginBottom">
+                                <content>
+                                    <Table
+                                        items="{ path: 'ui&gt;/costOpportunity/allAlternatives', templateShareable: false}"
+                                        noDataText="No different-route candidates were found."
+                                        sticky="ColumnHeaders">
+                                        <columns>
+                                            <Column width="5rem"><Text text="Leg" /></Column>
+                                            <Column><Text text="Original route" /></Column>
+                                            <Column><Text text="Alternative flight" /></Column>
+                                            <Column><Text text="Alternative route" /></Column>
+                                            <Column><Text text="Date" /></Column>
+                                            <Column><Text text="Airport changes" /></Column>
+                                            <Column hAlign="End"><Text text="Flight total" /></Column>
+                                            <Column hAlign="End"><Text text="Extra cost" /></Column>
+                                            <Column hAlign="End"><Text text="Adjusted total" /></Column>
+                                            <Column hAlign="End"><Text text="Net saving" /></Column>
+                                        </columns>
+                                        <items>
+                                            <ColumnListItem>
+                                                <cells>
+                                                    <Text text="{ui&gt;legNumber}" />
+                                                    <Text text="{ui&gt;originalRouteText}" />
+                                                    <Text text="{ui&gt;flightText}" />
+                                                    <Text text="{ui&gt;routeText}" />
+                                                    <Text text="{ui&gt;dateText}" />
+                                                    <Text text="{ui&gt;changedAirportText}" wrapping="true" />
+                                                    <ObjectNumber number="{ui&gt;flightTotalDisplay}" unit="{ui&gt;currency}" />
+                                                    <ObjectNumber number="{ui&gt;estimatedExtraCost}" unit="{ui&gt;currency}" />
+                                                    <ObjectNumber number="{ui&gt;adjustedTotalDisplay}" unit="{ui&gt;currency}" />
+                                                    <ObjectNumber number="{ui&gt;netSavingDisplay}" unit="{ui&gt;currency}" />
+                                                </cells>
+                                            </ColumnListItem>
+                                        </items>
+                                    </Table>
+                                </content>
+                            </Panel>
+
+                            <MessageStrip
+                                text="{ui&gt;/costOpportunity/evidenceLimit}"
+                                type="Warning"
+                                showIcon="true"
+                                class="sapUiTinyMarginBottom" />
+
+                            <List
+                                headerText="Opportunity check warnings"
+                                items="{ path: 'ui&gt;/costOpportunity/warnings', templateShareable: false}"
+                                noDataText="No opportunity-check warnings.">
+                                <StandardListItem title="{ui&gt;text}" icon="sap-icon://message-warning" />
+                            </List>
+
+                            <Panel
+                                headerText="Technical opportunity JSON"
+                                expandable="true"
+                                expanded="false"
+                                class="sapUiTinyMarginTop">
+                                <content>
+                                    <TextArea
+                                        value="{ui&gt;/costOpportunityPretty}"
+                                        width="100%"
+                                        rows="16"
+                                        editable="false" />
+                                </content>
+                            </Panel>
+                        </VBox>
+
+                        <MessageStrip
+                            visible="{= !${ui&gt;/costOpportunity/receiptId} }"
+                            text="Run Check cheaper opportunities to search different routes through GPS-nearby airports."
+                            type="Information"
+                            showIcon="true" />
+                    </content>
+                </Panel>
+
+                <Panel headerText="Technical" class="sapUiSmallMarginBottom">
+                    <content>
+
+                        <MessageStrip
+                            text="This block is mainly for debugging. It shows the grouped leg rows, unmatched legs, benchmark scope, and raw JSON so you can verify which inputs produced the final decision."
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+                        <MessageStrip
+                            text="{ui&gt;/cost/benchmarkScope}"
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+
+                        <Title level="H5" text="Grouped leg table" class="sapUiTinyMarginBottom" />
+                        <Table items="{ path: 'ui&gt;/cost/legGroups', templateShareable: false}" sticky="ColumnHeaders" class="sapUiSmallMarginBottom">
+                            <columns>
+                                <Column><Text text="Leg" /></Column>
+                                <Column><Text text="Carrier" /></Column>
+                                <Column><Text text="Date" /></Column>
+                                <Column hAlign="End"><Text text="Selected" /></Column>
+                                <Column hAlign="End"><Text text="Benchmark" /></Column>
+                                <Column hAlign="End"><Text text="Selected source" /></Column>
+                                <Column hAlign="End"><Text text="Benchmark source" /></Column>
+                                <Column hAlign="End"><Text text="Passengers" /></Column>
+                                <Column><Text text="Strength" /></Column>
+                                <Column><Text text="Status" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Text text="{ui&gt;lineTitle}" />
+                                        <Text text="{ui&gt;carrierId}" />
+                                        <Text text="{ui&gt;flightDate}" />
+                                        <ObjectNumber number="{ui&gt;selectedTotalDisplay}" unit="{ui&gt;decisionCurrency}" />
+                                        <ObjectNumber number="{ui&gt;benchmarkTotalDisplay}" unit="{ui&gt;decisionCurrency}" />
+                                        <ObjectNumber number="{ui&gt;selectedTotalSourceDisplay}" unit="{ui&gt;sourceCurrency}" />
+                                        <ObjectNumber number="{ui&gt;benchmarkTotalSourceDisplay}" unit="{ui&gt;sourceCurrency}" />
+                                        <ObjectNumber number="{ui&gt;passengerCount}" />
+                                        <ObjectStatus text="{ui&gt;benchmarkStrength}" />
+                                        <ObjectStatus text="{ui&gt;status}" state="{ui&gt;statusState}" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+
+                        <Title level="H5" text="Unmatched receipt flight legs" class="sapUiTinyMarginBottom" />
+                        <Table
+                            visible="{= ${ui&gt;/cost/unmatchedReceiptFlightLegCount} &gt; 0 }"
+                            items="{ path: 'ui&gt;/cost/unmatchedReceiptFlightLegs', templateShareable: false}"
+                            sticky="ColumnHeaders"
+                            class="sapUiSmallMarginBottom">
+                            <columns>
+                                <Column><Text text="Leg" /></Column>
+                                <Column><Text text="Flight" /></Column>
+                                <Column><Text text="Date" /></Column>
+                                <Column><Text text="Route" /></Column>
+                                <Column hAlign="End"><Text text="Estimated airfare" /></Column>
+                                <Column><Text text="Reason" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Text text="{ui&gt;leg}" />
+                                        <Text text="{ui&gt;legDetailText}" />
+                                        <Text text="{ui&gt;flightDate}" />
+                                        <Text text="{ui&gt;route}" />
+                                        <ObjectNumber number="{ui&gt;estimatedReceiptAirfareSource}" unit="{ui&gt;currency}" />
+                                        <Text text="{ui&gt;reasonText}" wrapping="true" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+
+                        <Panel expandable="true" expanded="false" headerText="Raw JSON response">
+                            <content>
+                                <TextArea value="{ui&gt;/costPretty}" width="100%" rows="18" editable="false" />
+                            </content>
+                        </Panel>
+                    </content>
+                </Panel>
+            </VBox>
+
+            <VBox visible="{= !${ui&gt;/cost/receiptId} }">
+                <MessageStrip
+                    text="No cost efficiency result loaded yet. Select a receipt and run Assess Cost."
+                    type="Information"
+                    showIcon="true" />
+            </VBox>
+        </VBox>
+    </IconTabFilter>
+</core:FragmentDefinition>

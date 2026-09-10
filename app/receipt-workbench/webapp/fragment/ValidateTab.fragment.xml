@@ -1,0 +1,257 @@
+<core:FragmentDefinition
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core"
+  xmlns:layout="sap.ui.layout">
+
+    <IconTabFilter key="validation">
+    <VBox class="sapUiSmallMargin">
+
+        <MessageStrip
+        text="{ui>/validationHelpText}"
+        type="Information"
+        showIcon="true"
+        class="sapUiTinyMarginBottom" />
+
+        <VBox visible="{ui>/validationHasResult}">
+
+        <Panel
+            headerText="Validation Result"
+            expandable="false"
+            class="sapUiSmallMarginBottom">
+
+            <content>
+            <FlexBox wrap="Wrap" renderType="Bare">
+
+                <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                    <Title level="H5" text="Overall Status" />
+                    <ObjectStatus
+                        text="{ui>/validationStatusText}"
+                        state="{ui>/validationStatusState}" />
+                </VBox>
+
+                <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                    <Title level="H5" text="Receipt" />
+                    <Text text="{ui>/validation/summary/receiptNo}" />
+                </VBox>
+
+                <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                    <Title level="H5" text="Travel ID" />
+                    <Text text="{ui>/validation/summary/travelId}" />
+                </VBox>
+
+                <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                    <Title level="H5" text="Total" />
+                    <ObjectNumber
+                        number="{ui>/validation/summary/totalAmount}"
+                        unit="{ui>/validation/summary/currency}" />
+                </VBox>
+
+                <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                    <Title level="H5" text="Items" />
+                    <ObjectNumber number="{ui>/validation/summary/itemCount}" />
+                </VBox>
+
+            </FlexBox>
+
+            <MessageStrip
+                text="{ui>/validationSummaryText}"
+                type="Success"
+                showIcon="true"
+                class="sapUiTinyMarginTop" />
+            </content>
+        </Panel>
+
+        <Panel
+            headerText="What was validated?"
+            expandable="true"
+            expanded="false"
+            class="sapUiSmallMarginBottom">
+
+            <content>
+            <List>
+                <StandardListItem wrapping="true" wrapCharLimit="500"
+                title="Required fields"
+                description="Checks document type, receipt number, receipt date, travel ID, currency, total amount, and items." />
+
+                <StandardListItem wrapping="true" wrapCharLimit="500"
+                title="Receipt values"
+                description="Checks that dates, currency, and amounts look valid." />
+
+                <StandardListItem wrapping="true" wrapCharLimit="500"
+                title="Receipt total"
+                description="Checks that the sum of all receipt items matches the extracted total amount." />
+
+                <StandardListItem wrapping="true" wrapCharLimit="500"
+                title="Receipt items"
+                description="Checks every item for type, amount, currency, and AIR-specific fields such as carrier, flight number, and flight date." />
+
+                <StandardListItem wrapping="true" wrapCharLimit="500"
+                title="Not included here"
+                description="This validation does not check the travel database. Use Match Data Model for travel, bookings, flights, and airport matching." />
+            </List>
+            </content>
+        </Panel>
+
+        <Panel
+            headerText="Missing Fields"
+            expandable="true"
+            expanded="false"
+            visible="{ui>/validationHasMissingFields}"
+            class="sapUiSmallMarginBottom">
+
+            <content>
+            <List items="{ui>/validationMissing}">
+                <StandardListItem title="{ui>}" />
+            </List>
+            </content>
+        </Panel>
+
+        <Panel
+            headerText="Warnings"
+            expandable="true"
+            expanded="true"
+            class="sapUiSmallMarginBottom">
+
+            <content>
+            <List
+                items="{ui>/validationWarnings}"
+                noDataText="No warnings. The extracted receipt data looks consistent.">
+                <StandardListItem
+                icon="sap-icon://message-warning"
+                title="{ui>}" />
+            </List>
+            </content>
+        </Panel>
+
+        <Panel
+            headerText="Total Check"
+            expandable="false"
+            class="sapUiSmallMarginBottom">
+
+            <content>
+            <FlexBox wrap="Wrap" renderType="Bare">
+
+                <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                <Title level="H5" text="Item Sum" />
+                <ObjectNumber
+                    number="{ui>/validation/checks/totals/extractedItemSum}"
+                    unit="{ui>/validation/summary/currency}" />
+                </VBox>
+
+                <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                <Title level="H5" text="Receipt Total" />
+                <ObjectNumber
+                    number="{ui>/validation/checks/totals/extractedTotal}"
+                    unit="{ui>/validation/summary/currency}" />
+                </VBox>
+
+                <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                <Title level="H5" text="Difference" />
+                <ObjectNumber
+                    number="{ui>/validation/checks/totals/extractedDiff}"
+                    unit="{ui>/validation/summary/currency}" />
+                </VBox>
+
+                <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                <Title level="H5" text="Result" />
+                <ObjectStatus
+                    text="{ui>/validation/checks/totals/itemSumMatchesTotal}"
+                    state="{ui>/validationStatusState}" />
+                </VBox>
+
+            </FlexBox>
+            </content>
+        </Panel>
+
+        <Panel
+            headerText="Item Validation"
+            expandable="true"
+            expanded="true"
+            class="sapUiSmallMarginBottom">
+
+            <content>
+            <Table
+                items="{ui>/validationItems}"
+                noDataText="No validation item details available."
+                sticky="ColumnHeaders">
+
+                <columns>
+                <Column width="4rem">
+                    <Text text="#" />
+                </Column>
+
+                <Column width="8rem">
+                    <Text text="Type" />
+                </Column>
+
+                <Column>
+                    <Text text="Description" />
+                </Column>
+
+                <Column width="8rem" hAlign="End">
+                    <Text text="Amount" />
+                </Column>
+
+                <!-- <Column width="6rem">
+                    <Text text="Currency" />
+                </Column> -->
+
+                <Column width="7rem">
+                    <Text text="Status" />
+                </Column>
+
+                <Column>
+                    <Text text="Warnings" />
+                </Column>
+                </columns>
+
+                <items>
+                <ColumnListItem>
+                    <cells>
+                    <Text text="{ui>index}" />
+                    <Text text="{ui>type}" />
+                    <Text text="{ui>description}" wrapping="true" />
+                    <ObjectNumber number="{ui>amount}" unit="{ui>currency}" />
+                    <!-- <Text text="{ui>currency}" /> -->
+
+                    <ObjectStatus
+                        text="{= ${ui>ok} ? 'OK' : 'Check' }"
+                        state="{= ${ui>ok} ? 'Success' : 'Warning' }" />
+
+                    <Text
+                        text="{path: 'ui>warnings', formatter: '.formatWarningList'}"
+                        wrapping="true" />
+                    </cells>
+                </ColumnListItem>
+                </items>
+            </Table>
+            </content>
+        </Panel>
+
+        <Panel
+            headerText="Technical Validation JSON"
+            expandable="true"
+            expanded="false"
+            class="sapUiSmallMarginTop">
+
+            <content>
+            <TextArea
+                value="{ui>/validationPretty}"
+                width="100%"
+                rows="14"
+                editable="false" />
+            </content>
+        </Panel>
+
+        </VBox>
+
+        <VBox visible="{ui>/validationNoResult}">
+        <MessageStrip
+            text="No validation result loaded yet. Select a receipt and run Validate."
+            type="Information"
+            showIcon="true" />
+        </VBox>
+
+    </VBox>
+    </IconTabFilter>
+</core:FragmentDefinition>

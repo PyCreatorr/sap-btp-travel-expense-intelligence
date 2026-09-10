@@ -1,0 +1,56 @@
+.hiddenResultTabsHeader .sapMITBHead,
+.hiddenResultTabsHeader .sapMITBHeader,
+.hiddenResultTabsHeader .sapMITBSep {
+  display: none;
+}
+
+.hiddenResultTabsHeader .sapMITBContent {
+  border-top: none;
+  padding: 0;
+}
+
+.workbenchLeftPane{
+  width:36%;
+}
+.workbenchRightPane{
+  width:60%;
+}
+
+/* Smaller panel header */
+.matchedBookingsCompact .sapMPanelHdr {
+    height: 2rem;
+    line-height: 2rem;
+}
+
+/* Smaller table column header */
+.matchedBookingsCompact .sapMListTblHeaderCell {
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+}
+
+/* Smaller table rows */
+.matchedBookingsCompact .sapMListTblCell {
+  height: 2rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+}
+
+.matchedBookingsCompact .sapMListTblRow {
+    height: 2rem;
+}
+
+/* Panel header bar */
+.matchedBookingsCompact .sapMPanelHdr {
+    height: 1.5rem;
+    line-height: 1.5rem;
+    min-height: 1.5rem;
+}
+
+
+
+@media (max-width: 900px) {
+  .workbenchLeftPane,
+  .workbenchRightPane {
+    width: 100%;
+  }
+}

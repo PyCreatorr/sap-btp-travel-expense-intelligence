@@ -1,0 +1,365 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+
+    <IconTabFilter key="match">
+        <VBox class="sapUiSmallMargin">
+
+            <MessageStrip
+                text="Match Travel Data checks the extracted receipt against the local DMO travel database: travel, customer, flight legs, bookings, and airfare totals."
+                type="Information"
+                showIcon="true"
+                class="sapUiTinyMarginBottom" />
+
+            <VBox visible="{ui>/matchHasResult}">
+
+                <Panel
+                    headerText="Travel Data Match Result"
+                    expandable="false"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <FlexBox wrap="Wrap" renderType="Bare">
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Overall Status" />
+                                <ObjectStatus
+                                    text="{ui>/matchStatusText}"
+                                    state="{path: 'ui&gt;/matchStatusState', formatter: '.formatValueState'}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Receipt Travel" />
+                                <Text text="{ui>/match/receipt/travelId}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="DMO Travel" />
+                                <Text text="{ui>/match/matchedTravelId}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Traveler" />
+                                <Text text="{ui>/match/travelCustomer/name}" />
+                                <Text text="{= 'Customer ' + ${ui>/match/travelCustomer/customerId} }" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Receipt Legs" />
+                                <ObjectNumber number="{ui>/match/receipt/flightLegCount}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Matched DMO Bookings" />
+                                <ObjectNumber number="{ui>/match/technical/matchedDmoBookingCount}" />
+                            </VBox>
+                        </FlexBox>
+
+                        <MessageStrip
+                            text="{ui>/matchSummaryText}"
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginTop" />
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="What was checked in the Travel Data?"
+                    expandable="true"
+                    expanded="false"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <List>
+                            <StandardListItem  wrapping="true" wrapCharLimit="500"
+                                title="Travel ID"
+                                description="Checks that the extracted receipt travel ID exists in demo.copilot.Travels. Leading zeroes such as 00000006 are normalized to DMO TravelID 6." />
+
+                            <StandardListItem  wrapping="true" wrapCharLimit="500"
+                                title="Traveler / customer"
+                                description="Checks that the extracted employee/customer exists in demo.copilot.Customers and appears in the bookings for the matched travel." />
+
+                            <StandardListItem  wrapping="true" wrapCharLimit="500"
+                                title="Flight legs"
+                                description="Checks each extracted itinerary leg against DMO bookings using carrier, flight/connection number, flight date, and route airports." />
+
+                            <StandardListItem  wrapping="true" wrapCharLimit="500"
+                                title="Booking coverage"
+                                description="Shows which DMO BookingIDs and CustomerIDs matched each receipt flight leg. This is important for multi-passenger travels." />
+
+                            <StandardListItem wrapping="true" wrapCharLimit="500"
+                                title="Airfare reconciliation"
+                                description="Compares the receipt airfare total against the sum of all matched DMO booked fares. A mismatch means the receipt may cover fewer passengers or different fare lines than the DMO travel." />
+
+                            <StandardListItem  wrapping="true" wrapCharLimit="500"
+                                title="Not included here"
+                                description="This tab does not judge whether the fare is economically good. Use Cost Efficiency for benchmark pricing after Travel Data is credible." />
+                        </List>
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Financial Reconciliation"
+                    expandable="false"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <FlexBox wrap="Wrap" renderType="Bare">
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Receipt Airfare" />
+                                <ObjectNumber
+                                    number="{ui>/match/receipt/receiptAirfareTotal}"
+                                    unit="{ui>/match/receipt/currency}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Matched DMO Airfare" />
+                                <ObjectNumber
+                                    number="{ui>/match/receipt/dmoMatchedBookedAirfareTotal}"
+                                    unit="{ui>/match/receipt/currency}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Difference" />
+                                <ObjectNumber
+                                    number="{ui>/match/receipt/airfareTotalDiff}"
+                                    unit="{ui>/match/receipt/currency}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Result" />
+                                <ObjectStatus
+                                    text="{ui>/match/airfareTotalMatchesText}"
+                                    state="{path: 'ui&gt;/match/airfareTotalMatchesState', formatter: '.formatValueState'}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Receipt Customers" />
+                                <ObjectNumber number="{ui>/match/receipt/customerCount}" />
+                            </VBox>
+
+                            <VBox class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <Title level="H5" text="Fare / Customer / Leg" />
+                                <ObjectNumber
+                                    number="{ui>/match/receipt/farePerCustomerPerLeg}"
+                                    unit="{ui>/match/receipt/currency}" />
+                            </VBox>
+                        </FlexBox>
+
+                        <MessageStrip
+                            text="For this type of response, the flight legs can all match while the airfare total still fails. Example: the receipt may show 1 customer, but DMO has 3 passenger bookings per leg."
+                            type="Warning"
+                            showIcon="true"
+                            visible="{= !${ui>/match/receipt/airfareTotalMatches} }"
+                            class="sapUiTinyMarginTop" />
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Warnings"
+                    expandable="true"
+                    expanded="true"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <List
+                            items="{ui>/match/warnings}"
+                            noDataText="No warnings. Travel data and receipt values are consistent.">
+                            <StandardListItem
+                                icon="sap-icon://message-warning"
+                                title="{ui>}" />
+                        </List>
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Traveler / Customer Match"
+                    expandable="true"
+                    expanded="true"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <Table
+                            items="{ui>/match/customers}"
+                            noDataText="No customer match details available."
+                            sticky="ColumnHeaders">
+                            <columns>
+                                <Column><Text text="Extracted Customer" /></Column>
+                                <Column><Text text="Extracted Name" /></Column>
+                                <Column><Text text="DMO Customer" /></Column>
+                                <Column><Text text="DMO Name" /></Column>
+                                <Column><Text text="Method" /></Column>
+                                <Column><Text text="In Bookings" /></Column>
+                                <Column><Text text="Name Matches" /></Column>
+                                <Column><Text text="Result" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Text text="{ui>extractedCustomerId}" />
+                                        <Text text="{ui>extractedName}" wrapping="true" />
+                                        <Text text="{ui>dmoCustomerId}" />
+                                        <Text text="{ui>dmoName}" wrapping="true" />
+                                        <Text text="{ui>matchMethod}" />
+                                        <Text text="{ui>appearsInBookingsText}" />
+                                        <Text text="{ui>nameMatchesText}" />
+                                        <ObjectStatus text="{ui>statusText}" state="{path: 'ui&gt;statusState', formatter: '.formatValueState'}" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Flight Leg Matching"
+                    expandable="true"
+                    expanded="true"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <MessageStrip
+                            text="Each receipt leg is checked against DMO bookings. Multiple matched booking IDs can be correct when the same leg has multiple passengers."
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+
+                        <Table
+                            items="{ui>/match/flightLegMatches}"
+                            noDataText="No flight leg match details available."
+                            sticky="ColumnHeaders">
+                            <columns>
+                                <Column width="4rem"><Text text="Leg" /></Column>
+                                <Column width="4rem"><Text text="Flight" /></Column>
+                                <Column width="5rem"><Text text="Date" /></Column>
+                                <Column width="8rem"><Text text="Route" /></Column>
+                                <Column width="5rem" ><Text text="Fare / Pax" /></Column>
+                                <Column width="5rem" ><Text text="Booking IDs" /></Column>
+                                <Column width="5rem"><Text text="Customer IDs" /></Column>
+                                <Column width="5rem" hAlign="End"><Text text="DMO Total" /></Column>
+                                <Column width="7rem"><Text text="Result" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Text text="{ui>leg}" />
+                                        <Text text="{ui>flightText}" />
+                                        <Text text="{ui>flightDate}" />
+                                        <Text text="{ui>route}" wrapping="true" />
+                                        <ObjectNumber number="{ui>farePerPassengerDisplay}" unit="{ui>currency}" />
+                                        <Text text="{ui>matchedBookingIdsText}" wrapping="true" />
+                                        <Text text="{ui>matchedCustomerIdsText}" wrapping="true" />
+                                        <ObjectNumber number="{ui>matchedBookingTotalDisplay}" unit="{ui>currency}" />
+                                        <ObjectStatus text="{ui>statusText}" state="{path: 'ui&gt;statusState', formatter: '.formatValueState'}" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Receipt Charge Items"
+                    expandable="true"
+                    expanded="false"
+                    class="sapUiSmallMarginBottom">
+                    <content>
+                        <Table
+                            items="{ui>/match/chargeItems}"
+                            noDataText="No receipt charge items available."
+                            sticky="ColumnHeaders">
+                            <columns>
+                                <Column width="8rem"><Text text="Type" /></Column>
+                                <Column><Text text="Description" /></Column>
+                                <Column width="9rem" hAlign="End"><Text text="Amount" /></Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Text text="{ui>type}" />
+                                        <Text text="{ui>description}" wrapping="true" />
+                                        <ObjectNumber number="{ui>amountDisplay}" unit="{ui>currency}" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Matched DMO Bookings"
+                    expandable="true"
+                    expanded="false"
+                    class="sapUiSmallMarginBottom sapUiSizeCompact matchedBookingsCompact">
+                    <content>
+                        <Table
+                            items="{ui>/match/matchedBookings}"
+                            noDataText="No matched DMO bookings available."
+                            sticky="ColumnHeaders"
+                            growing="true"
+                            growingThreshold="4"
+                            growingScrollToLoad="false">
+
+                            <columns>
+                                <Column width="5rem"><Text text="Booking" /></Column>
+                                <Column width="5rem"><Text text="Customer" /></Column>
+                                <Column width="3rem"><Text text="Leg" /></Column>
+                                <Column width="5rem"><Text text="Flight" /></Column>
+                                <Column width="7rem"><Text text="Date" /></Column>
+                                <Column width="6rem"><Text text="Route" /></Column>
+                                <Column width="4rem" hAlign="End"><Text text="Booked" /></Column>
+                                <Column width="5rem" hAlign="End"><Text text="Receipt" /></Column>
+                                <Column width="4rem" hAlign="End"><Text text="Catalog" /></Column>
+                                <Column><Text text="Catalog Note" /></Column>
+                            </columns>
+
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Text text="{ui>bookingId}" />
+                                        <Text text="{ui>customerId}" />
+                                        <Text text="{ui>matchedLeg}" />
+                                        <Text text="{ui>flightText}" />
+                                        <Text text="{ui>flightDate}" />
+
+                                        <Text
+                                            text="{ui>route}"
+                                            wrapping="false"
+                                            tooltip="{ui>route}" />
+
+                                        <ObjectNumber number="{ui>bookedFareDisplay}" />
+                                        <ObjectNumber number="{ui>receiptFareDisplay}" />
+                                        <ObjectNumber number="{ui>catalogFareDisplay}" />
+
+                                        <ObjectStatus
+                                            text="{ui>catalogNoteText}"
+                                            tooltip="{ui>catalogNoteText}"
+                                            state="{
+                                                path: 'ui>catalogNoteState',
+                                                formatter: '.formatValueState'
+                                            }" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+
+                    </content>
+                </Panel>
+
+                <Panel
+                    headerText="Technical Match JSON"
+                    expandable="true"
+                    expanded="false"
+                    class="sapUiSmallMarginTop">
+                    <content>
+                        <TextArea
+                            value="{ui>/matchPretty}"
+                            width="100%"
+                            rows="18"
+                            editable="false" />
+                    </content>
+                </Panel>
+            </VBox>
+
+            <VBox visible="{ui>/matchNoResult}">
+                <MessageStrip
+                    text="No Travel Data match result loaded yet. Select a receipt and run Match Travel Data."
+                    type="Information"
+                    showIcon="true" />
+            </VBox>
+        </VBox>
+   </IconTabFilter>
+</core:FragmentDefinition>

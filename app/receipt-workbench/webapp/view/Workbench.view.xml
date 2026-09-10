@@ -1,0 +1,181 @@
+<mvc:View
+  controllerName="demo.copilot.receiptworkbench.controller.Workbench"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:f="sap.f"
+  xmlns:form="sap.ui.layout.form"
+  xmlns:core="sap.ui.core"
+  xmlns:mc="sap.suite.ui.microchart"
+  xmlns:viz="sap.viz.ui5.controls"
+  xmlns:viz.data="sap.viz.ui5.data"
+  xmlns:viz.feeds="sap.viz.ui5.controls.common.feeds"
+  displayBlock="true">
+
+  <App>
+    <pages>
+      <Page showHeader="false" enableScrolling="false">
+        <content>
+          <f:DynamicPage id="page" toggleHeaderOnTitleClick="false" fitContent="true">
+            <f:title>
+              <f:DynamicPageTitle>
+                <f:heading>
+                  <Title text="Receipt Workbench" />
+                </f:heading>
+                <f:actions>
+                  <Button text="Upload Receipt"  type="{= ${ui>/selectedResultTab} === 'upload' ? 'Emphasized' : 'Default' }"  press=".onOpenUpload" />
+                  <Button id="extractButton" text="Extract" type="{= ${ui>/selectedResultTab} === 'receipt' ? 'Emphasized' : 'Default' }" press=".onExtract"  enabled="{= !!${ui>/selectedReceiptId} }" />
+                  <Button text="Validate extracted data" type="{= ${ui>/selectedResultTab} === 'validation' ? 'Emphasized' : 'Default' }" press=".onValidate" enabled="{= !!${ui>/selectedReceiptId} }" />
+                  <Button text="Match Travel Data" type="{= ${ui>/selectedResultTab} === 'match' ? 'Emphasized' : 'Default' }" press=".onMatch" enabled="{= !!${ui>/selectedReceiptId} }" />
+                  <!-- <Button text="Convert FX" press=".onConvertFx" enabled="{= !!${ui>/selectedReceiptId} }" /> -->
+                  <Button text="Posting Proposal" type="{= ${ui>/selectedResultTab} === 'posting' ? 'Emphasized' : 'Default' }" press=".onPostingProposal" enabled="{= !!${ui>/selectedReceiptId} }" />
+                  <Button text="Assess Cost" type="{= ${ui>/selectedResultTab} === 'cost' ? 'Emphasized' : 'Default' }" press=".onAssessCost" enabled="{= !!${ui>/selectedReceiptId} }" />
+                </f:actions>
+              </f:DynamicPageTitle>
+            </f:title>
+
+            <f:content>
+              <FlexBox width="100%" fitContainer="true" renderType="Bare" direction="Row" wrap="Wrap">
+                <VBox class="sapUiSmallMarginEnd workbenchLeftPane">
+                  <MessageStrip
+                    text="Upload a PDF receipt or select an existing one from the list. The actions above call your CopilotService handlers."
+                    type="Information"
+                    showIcon="true"
+                    class="sapUiTinyMarginBottom"/>
+
+                  <Table
+                    id="receiptsTable"
+                    mode="SingleSelectMaster"
+                    items="{path: 'ui>/recentReceipts', templateShareable: false}"
+                    selectionChange=".onReceiptSelect"
+                    updateFinished=".onReceiptsUpdateFinished"
+                    busy="{ui>/recentReceiptsLoading}"
+                    noDataText="No receipts found."
+                    sticky="ColumnHeaders">
+                      <headerToolbar>
+                        <OverflowToolbar>
+                          <Title text="{ui>/receiptsTitle}" />
+                          <ToolbarSpacer />
+                          
+                        </OverflowToolbar>
+                      </headerToolbar>
+                      <columns>
+                        <Column><Text text="File" /></Column>
+                        <Column><Text text="Status" /></Column>
+                        <Column><Text text="Travel" /></Column>
+                        <Column hAlign="End"><Text text="Total" /></Column>
+                        <Column width="3rem" hAlign="Center">
+                          <Text text="" />
+                        </Column>
+                      </columns>
+
+                      <items>
+                        <ColumnListItem>
+                          <cells>
+                            <ObjectIdentifier title="{ui>fileName}" text="{ui>receiptDate}" />
+                            <ObjectStatus text="{ui>status}" />
+                            <Text text="{ui>travelId}" />
+                            <ObjectNumber number="{ui>totalAmount}" unit="{ui>currency}" />
+                                <Button
+                                    icon="sap-icon://delete"
+                                    type="Transparent"
+                                    tooltip="Delete receipt"
+                                    press=".onDeleteReceipt" />                                
+                          </cells>
+                        </ColumnListItem>
+                      </items>
+                    </Table>
+                </VBox> 
+
+                <VBox class="workbenchRightPane" renderType="Bare">
+                  <IconTabBar id="resultTabs" class="hiddenResultTabsHeader" expanded="true" selectedKey="{ui>/selectedResultTab}">
+                    <items>
+
+                      <core:Fragment
+                        fragmentName="demo.copilot.receiptworkbench.fragment.ReceiptTab"
+                        type="XML" />
+
+                      
+                      <core:Fragment
+                        fragmentName="demo.copilot.receiptworkbench.fragment.ValidateTab"
+                        type="XML" />
+
+                      <core:Fragment
+                        fragmentName="demo.copilot.receiptworkbench.fragment.MatchTab"
+                        type="XML" />
+
+                      <IconTabFilter key="fx" >
+                        <VBox class="sapUiSmallMargin">
+                          <MessageStrip
+                            text="Choose the target currency for FX conversion. The same currency is also used for Posting Proposal."
+                            type="Information"
+                            showIcon="true"
+                            class="sapUiTinyMarginBottom" />
+
+                          <OverflowToolbar class="sapUiTinyMarginBottom">
+                            <Label text="Target Currency" labelFor="targetCurrencyBox" />
+                            <ComboBox
+                              id="targetCurrencyBox"
+                              width="10rem"
+                              value="{ui>/selectedTargetCurrency}"
+                              change=".onTargetCurrencyChange"
+                              selectionChange=".onTargetCurrencyChange"
+                              placeholder="EUR"
+                              items="{ui>/currencyOptions}">
+                              <core:Item key="{ui>key}" text="{ui>text}" />
+                            </ComboBox>
+                            <Button text="Convert FX" press=".onConvertFx" />
+                            <ToolbarSpacer />
+                            <ObjectStatus text="{= 'Current target: ' + ${ui>/selectedTargetCurrency} }" />
+                          </OverflowToolbar>
+
+                          <MessageStrip
+                            text="{ui>/fxErrorMessage}"
+                            type="Warning"
+                            showIcon="true"
+                            visible="{ui>/fxErrorVisible}"
+                            class="sapUiTinyMarginBottom" />
+
+                          <VBox visible="{= !!${ui>/fxPretty} }">
+                            <Title level="H5" text="FX Response" class="sapUiTinyMarginBottom" />
+                            <TextArea value="{ui>/fxPretty}" width="100%" rows="14" editable="false" />
+                          </VBox>
+
+                          <Panel
+                            expandable="true"
+                            expanded="false"
+                            headerText="Technical FX Details"
+                            visible="{= !!${ui>/fxErrorTechnical} }"
+                            class="sapUiSmallMarginTop">
+                            <content>
+                              <Text text="{ui>/fxErrorTechnical}" wrapping="true" />
+                            </content>
+                          </Panel>
+
+                          <VBox visible="{= !${ui>/fxPretty} &amp;&amp; !${ui>/fxErrorMessage} }">
+                            <MessageStrip
+                              text="No FX result loaded yet. Choose a target currency and run Convert FX."
+                              type="Information"
+                              showIcon="true" />
+                          </VBox>
+                        </VBox>
+                      </IconTabFilter>
+
+                      <core:Fragment
+                        fragmentName="demo.copilot.receiptworkbench.fragment.PostingTab"
+                        type="XML" />
+
+                      <core:Fragment
+                        fragmentName="demo.copilot.receiptworkbench.fragment.CostTab"
+                        type="XML" />
+
+                    </items>
+                  </IconTabBar>
+                </VBox>
+              </FlexBox>
+            </f:content>
+          </f:DynamicPage>
+        </content>
+      </Page>
+    </pages>
+  </App>
+</mvc:View>
