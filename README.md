@@ -104,7 +104,6 @@ docs/
   demo.md
   screenshots/
 
-migration/                 # optional migration / data-preparation helpers
 mta.yaml                   # BTP deployment descriptor, where included in the public package
 package.json
 README.md
@@ -124,7 +123,13 @@ README.md
 | `assessCostEfficiency`      | Produces an evidence-aware airfare benchmark and decision                            |
 | `checkCheaperOpportunities` | Explores configured nearby-airport/date alternatives                                 |
 
-## Application screenshots
+## Application walkthrough
+
+### Demo receipt
+
+Demo receipt used in the portfolio scenario
+
+![Demo receipt](docs/screenshots/receipt-demo.png)
 
 ### 1. Upload & Ingestion
 
@@ -148,14 +153,9 @@ README.md
 
 ### 6. Cost Assessment
 
-![Cost Assessment](docs/screenshots/06-cost-assessment.png)
+The final assessment combines airfare benchmarking, benchmark strength, receipt integrity and supporting alternatives into an explainable business decision.
 
-<details>
-<summary>Demo receipt used in the portfolio scenario</summary>
-
-![Demo receipt](docs/screenshots/Receipt-Demo.png)
-
-</details>
+![Cost Assessment](docs/screenshots/06-cost-assessment.gif)
 
 ## Decision model
 
